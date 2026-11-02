@@ -4,7 +4,10 @@ from dataclasses import dataclass
 
 TEMPO_THRESHOLD_BPM = 120
 TEMPO_MATCH_BONUS = 0.5
-SUBGENRE_MATCH_POINTS = 1.5
+ENERGY_MATCH_MULTIPLIER = 1.5
+GENRE_MATCH_POINTS = 1.5
+SUBGENRE_MATCH_POINTS = 1.125
+RELATED_GENRE_MULTIPLIER = 0.75
 
 SUBGENRES = {
     "electronic": {"edm", "house music"},
@@ -113,32 +116,35 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     preferred_genre = user_prefs["genre"].strip().casefold()
 
     if song_genre == preferred_genre:
-        score += 2.0
-        reasons.append("Genre match (+2.0)")
+        score += GENRE_MATCH_POINTS
+        reasons.append(f"Genre match (+{GENRE_MATCH_POINTS:.1f})")
     else:
         if song_genre in SUBGENRES.get(preferred_genre, set()):
             score += SUBGENRE_MATCH_POINTS
-            reasons.append(f"Subgenre match (+{SUBGENRE_MATCH_POINTS:.2f})")
+            reasons.append(f"Subgenre match (+{SUBGENRE_MATCH_POINTS:.3f})")
         else:
             related_genre_points = RELATED_GENRES.get(preferred_genre, {}).get(
                 song_genre, 0
-            )
+            ) * RELATED_GENRE_MULTIPLIER
             score += related_genre_points
             if related_genre_points > 0:
                 reasons.append(f"Related genre (+{related_genre_points:.2f})")
 
-    if song["mood"] == user_prefs["mood"]:
+    song_mood = song["mood"].strip().casefold()
+    preferred_mood = user_prefs["mood"].strip().casefold()
+
+    if song_mood == preferred_mood:
         score += 1.0
         reasons.append("Mood match (+1.0)")
     else:
-        related_mood_points = RELATED_MOODS.get(user_prefs["mood"], {}).get(
-            song["mood"], 0
-        )
+        related_mood_points = RELATED_MOODS.get(preferred_mood, {}).get(song_mood, 0)
         score += related_mood_points
         if related_mood_points > 0:
             reasons.append(f"Related mood (+{related_mood_points:.2f})")
 
-    energy_points = max(0.0, 1.0 - abs(song["energy"] - user_prefs["energy"]))
+    energy_points = ENERGY_MATCH_MULTIPLIER * max(
+        0.0, 1.0 - abs(song["energy"] - user_prefs["energy"])
+    )
     score += energy_points
     if energy_points > 0:
         reasons.append(f"Energy match (+{energy_points:.2f})")

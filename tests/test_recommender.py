@@ -73,6 +73,32 @@ def test_optional_profile_preferences_default_to_unset():
     assert user.prefers_high_danceability is None
 
 
+def test_acoustic_preference_distinguishes_unset_true_and_false():
+    song = {
+        "genre": "pop",
+        "mood": "happy",
+        "energy": 0.8,
+        "acousticness": 0.8,
+    }
+
+    base_prefs = {"genre": "pop", "mood": "happy", "energy": 0.8}
+    unset_score, unset_reasons = score_song(base_prefs, song)
+    assert unset_score == 4.0
+    assert not any("Acoustic preference" in reason for reason in unset_reasons)
+
+    likes_acoustic_score, likes_acoustic_reasons = score_song(
+        {**base_prefs, "likes_acoustic": True}, song
+    )
+    assert likes_acoustic_score == 4.4
+    assert "Acoustic preference (+0.40)" in likes_acoustic_reasons
+
+    dislikes_acoustic_score, dislikes_acoustic_reasons = score_song(
+        {**base_prefs, "likes_acoustic": False}, song
+    )
+    assert dislikes_acoustic_score == 4.1
+    assert "Acoustic preference (+0.10)" in dislikes_acoustic_reasons
+
+
 def test_high_danceability_preference_uses_proportional_score():
     user_prefs = {
         "genre": "pop",
@@ -128,6 +154,16 @@ def test_danceability_preference_is_ignored_when_not_set():
     assert not any("Danceability" in reason for reason in reasons)
 
 
+def test_mood_match_ignores_case_and_surrounding_whitespace():
+    user_prefs = {"genre": "pop", "mood": "  ReLaXeD ", "energy": 0.8}
+    song = {"genre": "pop", "mood": "relaxed  ", "energy": 0.8}
+
+    score, reasons = score_song(user_prefs, song)
+
+    assert score == 4.0
+    assert "Mood match (+1.0)" in reasons
+
+
 def test_latin_subgenres_get_subgenre_score():
     user_prefs = {"genre": "latin", "mood": "neutral", "energy": 1.0}
 
@@ -135,8 +171,8 @@ def test_latin_subgenres_get_subgenre_score():
         score, reasons = score_song(
             user_prefs, {"mood": "neutral", "energy": 0.0, "genre": genre}
         )
-        assert score == 2.5
-        assert "Subgenre match (+1.50)" in reasons
+        assert score == 2.125
+        assert "Subgenre match (+1.125)" in reasons
 
 
 def test_electronic_subgenres_get_subgenre_score():
@@ -146,8 +182,8 @@ def test_electronic_subgenres_get_subgenre_score():
         score, reasons = score_song(
             user_prefs, {"genre": genre, "mood": "neutral", "energy": 0.0}
         )
-        assert score == 2.5
-        assert "Subgenre match (+1.50)" in reasons
+        assert score == 2.125
+        assert "Subgenre match (+1.125)" in reasons
 
 
 def test_hip_hop_subgenres_get_subgenre_score():
@@ -157,8 +193,8 @@ def test_hip_hop_subgenres_get_subgenre_score():
         score, reasons = score_song(
             user_prefs, {"genre": genre, "mood": "neutral", "energy": 0.0}
         )
-        assert score == 2.5
-        assert "Subgenre match (+1.50)" in reasons
+        assert score == 2.125
+        assert "Subgenre match (+1.125)" in reasons
 
 
 def test_country_subgenres_get_subgenre_score():
@@ -168,8 +204,8 @@ def test_country_subgenres_get_subgenre_score():
         score, reasons = score_song(
             user_prefs, {"genre": genre, "mood": "neutral", "energy": 0.0}
         )
-        assert score == 2.5
-        assert "Subgenre match (+1.50)" in reasons
+        assert score == 2.125
+        assert "Subgenre match (+1.125)" in reasons
 
 
 def test_tempo_preference_uses_120_bpm_threshold():
