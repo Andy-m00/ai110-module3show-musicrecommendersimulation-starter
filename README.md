@@ -19,16 +19,26 @@ Replace this paragraph with your own summary of what your version does.
 
 Explain your design in plain language.
 
+### Two starter workflows
+
+- `src/main.py` uses the function-based workflow: songs are loaded from the CSV as a list of dictionaries and passed to functions such as `recommend_songs`.
+- `tests/test_recommender.py` tests the object-oriented workflow: `Song` and `UserProfile` objects are used with the `Recommender` class.
+
+These are separate ways to represent and recommend songs; the dictionary-based workflow does not automatically create `Song` objects.
+
 Some prompts to answer:
 
 - What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
+  id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness
 - What information does your `UserProfile` store
+  favorite genre, favorite mood, target energy, plus optional acoustic, high/low tempo (120 BPM cutoff), and high/low danceability (0.7 cutoff) preferences
 - How does your `Recommender` compute a score for each song
+ it asigns a numerical value to each song based on how the songs listed attributes align with users "taste profile".
 - How do you choose which songs to recommend
+  Numerical score comparison. Every song gets a specific score calculated from the users target score and its own attributes. The closer it is to the target the more points it get the more likely it is recommended. As of writing this im on my first draft but Id ideally like to maybe prompt the user on how they interacted with the recommended song. Platforms like spotify and tiktok use this hybrid method of suggestion based on engagement patterns and content attributes(mood, energy, genre, etc). They also use a miriad of differnt algos to weigh which song should be ranked higher taking into consideration; the date of release, or the genre, or whether users with simlar profiles interacted with this music. This is why Id like to see if theres a simple way to determine if the user had a positive listening experience or if they skipped. These platforms also do a bunch of realtime algorithm adjustments that are happening concurrently along with more recommendation systems that determine rankings through user engagement potential and how willing and often the user trys to explrore music but, this program wont be that complex.
 
 You can include a simple diagram or bullet list if helpful.
-
+song is compared to users taste profile --> given a score --> list is created in order with error handling(matching attributes, same song etc) -->
 ---
 
 ## Getting Started
@@ -117,6 +127,3 @@ Write 1 to 2 paragraphs here about what you learned:
 
 - about how recommenders turn data into predictions
 - about where bias or unfairness could show up in systems like this
-
-
-
